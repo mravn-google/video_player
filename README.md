@@ -1,10 +1,6 @@
 # video_player
 
-A new flutter plugin project.
+A plugin for Flutter allowing playback of video using the native video player, playing into a graphics texture displayed
+as a widget in Flutter.
 
-## Getting Started
-
-For help getting started with Flutter, view our online
-[documentation](http://flutter.io/).
-
-For help on editing plugin code, view the [documentation](https://flutter.io/platform-plugins/#edit-code).
+Still very much work in progress. Only works with custom engine and flutter code.
