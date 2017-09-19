@@ -1,0 +1,14 @@
+name: video_player
+description: A new flutter plugin project.
+version: 0.0.1
+author:
+homepage:
+
+flutter:
+  plugin:
+    androidPackage: com.yourcompany.videoplayer
+    pluginClass: VideoPlayerPlugin
+
+dependencies:
+  flutter:
+    sdk: flutter
