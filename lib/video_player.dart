@@ -28,7 +28,6 @@ class _VideoPlayerState extends State<StatefulWidget> {
     super.initState();
     gotImageId = _channel.invokeMethod('createVideoPlayer', {'dataSource': dataSource}).then((int imageId) {
       setState(() {
-        print("Got imageId: $imageId");
         this.imageId = imageId;
       });
     });
