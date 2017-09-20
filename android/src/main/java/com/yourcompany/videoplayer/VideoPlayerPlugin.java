@@ -21,17 +21,18 @@ import java.util.Map;
  */
 public class VideoPlayerPlugin implements MethodCallHandler {
   private class VideoPlayer {
-    VideoPlayer(String dataSource) {
+    VideoPlayer(FlutterView view, String dataSource) {
+      this.view = view;
       imageId = FlutterView.createSurfaceTexture();
       SurfaceTexture surfaceTexture = FlutterView.getSurfaceTexture(imageId);
       surfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
         @Override
         public void onFrameAvailable(SurfaceTexture texture) {
-          FlutterView.markSurfaceTextureDirty(imageId);
+          VideoPlayer.this.view.markSurfaceTextureDirty(imageId);
         }
       });
+      mediaPlayer = new MediaPlayer();
       try {
-        mediaPlayer = new MediaPlayer();
         mediaPlayer.setDataSource(dataSource);
 
         mediaPlayer.setSurface(new Surface(surfaceTexture));
@@ -63,24 +64,30 @@ public class VideoPlayerPlugin implements MethodCallHandler {
       return imageId;
     }
 
-    private MediaPlayer mediaPlayer;
-    private long imageId;
+    private final FlutterView view;
+    private final MediaPlayer mediaPlayer;
+    private final long imageId;
   }
   /**
    * Plugin registration.
    */
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), "video_player");
-    channel.setMethodCallHandler(new VideoPlayerPlugin());
+    channel.setMethodCallHandler(new VideoPlayerPlugin(registrar.view()));
+  }
+
+  private VideoPlayerPlugin(FlutterView view) {
+    this.view = view;
   }
 
   static final String TAG = "FlutterView";
   static private Map<Long, VideoPlayer> videoPlayers = new HashMap<>();
+  private final FlutterView view;
 
   @Override
   public void onMethodCall(MethodCall call, Result result) {
     if (call.method.equals("createVideoPlayer")) {
-      VideoPlayer videoPlayer = new VideoPlayer((String)call.argument("dataSource"));
+      VideoPlayer videoPlayer = new VideoPlayer(view, (String)call.argument("dataSource"));
       videoPlayers.put(videoPlayer.getImageId(), videoPlayer);
       result.success(videoPlayer.getImageId());
     } else if (call.method.equals("disposeVideoPlayer")) {
