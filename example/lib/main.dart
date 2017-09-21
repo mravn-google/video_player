@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 void main() {
-  print("Hej");
   runApp(
     new MaterialApp(
       home: new Scaffold(
