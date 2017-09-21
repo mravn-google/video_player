@@ -31,6 +31,7 @@ public class VideoPlayerPlugin implements MethodCallHandler {
           VideoPlayer.this.view.markSurfaceTextureDirty(imageId);
         }
       });
+      Log.e(TAG, "Creating media player");
       mediaPlayer = new MediaPlayer();
       try {
         mediaPlayer.setDataSource(dataSource);
@@ -40,7 +41,6 @@ public class VideoPlayerPlugin implements MethodCallHandler {
         mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
           @Override
           public void onPrepared(MediaPlayer mp) {
-            Log.e(TAG, "onPrepared");
             mp.setLooping(true);
             mp.start();
           }
@@ -52,7 +52,6 @@ public class VideoPlayerPlugin implements MethodCallHandler {
             return true;
           }
         });
-        Log.e(TAG, "preparing async");
         mediaPlayer.prepareAsync();
       } catch (Exception e) {
         Log.e(TAG, "Mediaplayer setup error ");
@@ -62,6 +61,11 @@ public class VideoPlayerPlugin implements MethodCallHandler {
 
     public long getImageId() {
       return imageId;
+    }
+
+    public void dispose() {
+      Log.e(TAG, "Releaseing media player");
+      mediaPlayer.release();
     }
 
     private final FlutterView view;
@@ -91,9 +95,12 @@ public class VideoPlayerPlugin implements MethodCallHandler {
       videoPlayers.put(videoPlayer.getImageId(), videoPlayer);
       result.success(videoPlayer.getImageId());
     } else if (call.method.equals("disposeVideoPlayer")) {
-      long imageId = (long)call.argument("imageId");
+      long imageId = ((Number)call.argument("imageId")).longValue();
       Log.e(TAG, "Disposing videoplayer " + imageId);
-      videoPlayers.remove(imageId);
+      final VideoPlayer player = videoPlayers.remove(imageId);
+      if (player != null) {
+        player.dispose();
+      }
       result.success(true);
     } else {
       result.notImplemented();
