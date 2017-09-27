@@ -12,6 +12,12 @@ dev_dependencies:
   video_player:
     path: ../
 
+dependency_overrides:
+  sky_engine:
+    path: ../../engine/src/out/ios_debug_unopt/gen/dart-pkg/sky_engine
+  sky_services:
+    path: ../../engine/src/out/ios_debug_unopt/gen/dart-pkg/sky_services
+
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec
 
