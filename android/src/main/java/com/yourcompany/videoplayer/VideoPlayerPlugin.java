@@ -24,12 +24,12 @@ public class VideoPlayerPlugin implements MethodCallHandler {
     @TargetApi(21)
     VideoPlayer(FlutterView view, String dataSource, final Result result) {
       this.view = view;
-      imageId = FlutterView.createSurfaceTexture();
-      SurfaceTexture surfaceTexture = FlutterView.getSurfaceTexture(imageId);
+      surfaceId = FlutterView.createSurfaceTexture();
+      SurfaceTexture surfaceTexture = FlutterView.getSurfaceTexture(surfaceId);
       surfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
         @Override
         public void onFrameAvailable(SurfaceTexture texture) {
-          VideoPlayer.this.view.markSurfaceTextureDirty(imageId);
+          VideoPlayer.this.view.markSurfaceTextureDirty(surfaceId);
         }
       });
       mediaPlayer = new MediaPlayer();
@@ -46,7 +46,7 @@ public class VideoPlayerPlugin implements MethodCallHandler {
           @Override
           public void onPrepared(MediaPlayer mp) {
             mediaPlayer.setLooping(true);
-            result.success(imageId);
+            result.success(surfaceId);
           }
         });
         mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
@@ -77,8 +77,8 @@ public class VideoPlayerPlugin implements MethodCallHandler {
       return mediaPlayer.getDuration();
     }
 
-    public long getImageId() {
-      return imageId;
+    public long getSurfaceId() {
+      return surfaceId;
     }
 
     public void dispose() {
@@ -87,7 +87,7 @@ public class VideoPlayerPlugin implements MethodCallHandler {
 
     private final FlutterView view;
     private final MediaPlayer mediaPlayer;
-    private final long imageId;
+    private final long surfaceId;
   }
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), "video_player");
@@ -106,30 +106,30 @@ public class VideoPlayerPlugin implements MethodCallHandler {
   public void onMethodCall(MethodCall call, Result result) {
     if (call.method.equals("create")) {
       VideoPlayer videoPlayer = new VideoPlayer(view, (String)call.argument("dataSource"), result);
-      videoPlayers.put(videoPlayer.getImageId(), videoPlayer);
+      videoPlayers.put(videoPlayer.getSurfaceId(), videoPlayer);
     } else if (call.method.equals("play")) {
-      long imageId = ((Number)call.argument("imageId")).longValue();
-      VideoPlayer player = videoPlayers.get(imageId);
+      long surfaceId = ((Number)call.argument("surfaceId")).longValue();
+      VideoPlayer player = videoPlayers.get(surfaceId);
       player.play();
       result.success(true);
     } else if (call.method.equals("pause")) {
-      long imageId = ((Number)call.argument("imageId")).longValue();
-      VideoPlayer player = videoPlayers.get(imageId);
+      long surfaceId = ((Number)call.argument("surfaceId")).longValue();
+      VideoPlayer player = videoPlayers.get(surfaceId);
       player.pause();
       result.success(true);
     } else if (call.method.equals("seekTo")) {
-      long imageId = ((Number)call.argument("imageId")).longValue();
+      long surfaceId = ((Number)call.argument("surfaceId")).longValue();
       int location = ((Number)call.argument("location")).intValue();
-      VideoPlayer player = videoPlayers.get(imageId);
+      VideoPlayer player = videoPlayers.get(surfaceId);
       player.seekTo(location);
       result.success(true);
     } else if (call.method.equals("duration")) {
-      long imageId = ((Number)call.argument("imageId")).longValue();
-      VideoPlayer player = videoPlayers.get(imageId);
+      long surfaceId = ((Number)call.argument("surfaceId")).longValue();
+      VideoPlayer player = videoPlayers.get(surfaceId);
       result.success(player.getDuration());
     } else if (call.method.equals("dispose")) {
-      long imageId = ((Number)call.argument("imageId")).longValue();
-      VideoPlayer player = videoPlayers.remove(imageId);
+      long surfaceId = ((Number)call.argument("surfaceId")).longValue();
+      VideoPlayer player = videoPlayers.remove(surfaceId);
       if (player != null) {
         player.dispose();
       }
