@@ -111,7 +111,7 @@ class _VideoPlayerState extends State<StatefulWidget> {
   @override
   Widget build(BuildContext context) {
     return new GestureDetector(
-      child: new ExternalImage(imageId: videoPlayerId.imageId),
+      child: new PlatformSurface(surfaceId: videoPlayerId.surfaceId),
       onTap: () {
         isPlaying = !isPlaying;
         setState(() {});

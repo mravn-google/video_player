@@ -1,7 +1,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import "VideoPlayerPlugin.h"
 
-@interface VideoPlayer: NSObject<FlutterExternalImage>
+@interface VideoPlayer: NSObject<FlutterPlatformSurface>
 @property(readonly, nonatomic) AVPlayer* player;
 @property(readonly, nonatomic) AVPlayerItemVideoOutput* videoOutput;
 @end
@@ -62,7 +62,7 @@
 @end
 
 @interface VideoPlayerPlugin()
-@property(readonly, nonatomic) NSObject<FlutterExternalImageRegistry>* registry;
+@property(readonly, nonatomic) NSObject<FlutterPlatformSurfaceRegistry>* registry;
 @property(readonly, nonatomic) NSMutableDictionary* players;
 @end
 
@@ -71,11 +71,11 @@
   FlutterMethodChannel* channel = [FlutterMethodChannel
       methodChannelWithName:@"video_player"
             binaryMessenger:[registrar messenger]];
-  VideoPlayerPlugin* instance = [[VideoPlayerPlugin alloc] initWithRegistry:[registrar externalImageRegistry]];
+  VideoPlayerPlugin* instance = [[VideoPlayerPlugin alloc] initWithRegistry:[registrar platformSurfaceRegistry]];
   [registrar addMethodCallDelegate:instance channel:channel];
 }
 
-- (instancetype)initWithRegistry:(NSObject<FlutterExternalImageRegistry>*)registry {
+- (instancetype)initWithRegistry:(NSObject<FlutterPlatformSurfaceRegistry>*)registry {
   self = [super init];
   NSAssert(self, @"super init cannot be nil");
   _registry = registry;
@@ -86,13 +86,13 @@
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
   if ([@"createVideoPlayer" isEqualToString:call.method]) {
     VideoPlayer* player = [[VideoPlayer alloc] init];
-    NSUInteger imageId = [_registry registerExternalImage:player];
+    NSUInteger imageId = [_registry registerPlatformSurface:player];
     _players[@(imageId)] = player;
     result(@(imageId));
   } else if ([@"disposeVideoPlayer" isEqualToString:call.method]) {
     NSUInteger imageId = ((NSNumber*) call.arguments).unsignedIntegerValue;
     [_players removeObjectForKey:@(imageId)];
-    [_registry unregisterExternalImage:imageId];
+    [_registry unregisterPlatformSurface:imageId];
   } else {
     result(FlutterMethodNotImplemented);
   }

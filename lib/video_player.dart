@@ -5,16 +5,16 @@ import 'package:flutter/widgets.dart';
 
 const MethodChannel _channel = const MethodChannel('video_player');
 
-/// A reference to a platform video player playing into an [ExternalImage].
+/// A reference to a platform video player playing into a [PlatformSurface].
 ///
 /// Instances are created asynchronously with [create].
 ///
-/// The video is shown in a flutter app by creating an [ExternalImage] widget
-/// with [imageId].
+/// The video is shown in a flutter app by creating a [PlatformSurface] widget
+/// with [surfaceId].
 class VideoPlayerId {
-  final int imageId;
+  final int surfaceId;
 
-  VideoPlayerId._internal(int imageId) : imageId = imageId;
+  VideoPlayerId._internal(int imageId) : surfaceId = imageId;
 
   static Future<VideoPlayerId> create(String dataSource) async {
     int imageId =
@@ -23,26 +23,26 @@ class VideoPlayerId {
   }
 
   Future<Null> dispose() async {
-    await _channel.invokeMethod('dispose', {'imageId': imageId});
+    await _channel.invokeMethod('dispose', {'imageId': surfaceId});
   }
 
   Future<Null> play() async {
-    await _channel.invokeMethod('play', {'imageId': imageId});
+    await _channel.invokeMethod('play', {'imageId': surfaceId});
   }
 
   Future<Null> pause() async {
-    await _channel.invokeMethod('pause', {'imageId': imageId});
+    await _channel.invokeMethod('pause', {'imageId': surfaceId});
   }
 
   /// The duration of the current video.
   Future<Duration> get duration async {
     return new Duration(
         milliseconds:
-            await _channel.invokeMethod('duration', {'imageId': imageId}));
+            await _channel.invokeMethod('duration', {'imageId': surfaceId}));
   }
 
   Future<Null> seekTo(Duration duration) async {
     await _channel.invokeMethod(
-        'seekTo', {'imageId': imageId, 'location': duration.inMilliseconds});
+        'seekTo', {'imageId': surfaceId, 'location': duration.inMilliseconds});
   }
 }
