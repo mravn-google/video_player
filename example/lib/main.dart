@@ -79,6 +79,52 @@ Widget buildCard(String title) {
   );
 }
 
+class VideoPlayer extends StatefulWidget {
+  final VideoPlayerId videoPlayerId;
+
+  VideoPlayer(this.videoPlayerId);
+
+  @override
+  State createState() {
+    return new _VideoPlayerState(videoPlayerId);
+  }
+}
+
+class _VideoPlayerState extends State<StatefulWidget> {
+  final VideoPlayerId videoPlayerId;
+  bool isPlaying = true;
+
+  _VideoPlayerState(this.videoPlayerId);
+
+  @override
+  void initState() {
+    super.initState();
+    if (isPlaying) videoPlayerId.play();
+  }
+
+  @override
+  void deactivate() {
+    if (isPlaying) videoPlayerId.pause();
+    super.deactivate();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return new GestureDetector(
+      child: new ExternalImage(imageId: videoPlayerId.imageId),
+      onTap: () {
+        isPlaying = !isPlaying;
+        setState(() {});
+        if (isPlaying) {
+          videoPlayerId.play();
+        } else {
+          videoPlayerId.pause();
+        }
+      },
+    );
+  }
+}
+
 void main() {
   Future<VideoPlayerId> video = VideoPlayerId.create(
       'http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_20mb.mp4');

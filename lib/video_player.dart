@@ -5,10 +5,16 @@ import 'package:flutter/widgets.dart';
 
 const MethodChannel _channel = const MethodChannel('video_player');
 
+/// A reference to a platform video player playing into an [ExternalImage].
+///
+/// Instances are created asynchronously with [create].
+///
+/// The video is shown in a flutter app by creating an [ExternalImage] widget
+/// with [imageId].
 class VideoPlayerId {
-  final int _imageId;
+  final int imageId;
 
-  VideoPlayerId._internal(int imageId) : _imageId = imageId;
+  VideoPlayerId._internal(int imageId) : imageId = imageId;
 
   static Future<VideoPlayerId> create(String dataSource) async {
     int imageId =
@@ -17,72 +23,26 @@ class VideoPlayerId {
   }
 
   Future<Null> dispose() async {
-    await _channel.invokeMethod('dispose', {'imageId': _imageId});
+    await _channel.invokeMethod('dispose', {'imageId': imageId});
   }
 
   Future<Null> play() async {
-    await _channel.invokeMethod('play', {'imageId': _imageId});
+    await _channel.invokeMethod('play', {'imageId': imageId});
   }
 
   Future<Null> pause() async {
-    await _channel.invokeMethod('pause', {'imageId': _imageId});
+    await _channel.invokeMethod('pause', {'imageId': imageId});
   }
 
   /// The duration of the current video.
   Future<Duration> get duration async {
     return new Duration(
         milliseconds:
-            await _channel.invokeMethod('duration', {'imageId': _imageId}));
+            await _channel.invokeMethod('duration', {'imageId': imageId}));
   }
 
   Future<Null> seekTo(Duration duration) async {
     await _channel.invokeMethod(
-        'seekTo', {'imageId': _imageId, 'location': duration.inMilliseconds});
-  }
-}
-
-class VideoPlayer extends StatefulWidget {
-  final VideoPlayerId videoPlayerRef;
-
-  VideoPlayer(this.videoPlayerRef);
-
-  @override
-  State createState() {
-    return new _VideoPlayerState(videoPlayerRef);
-  }
-}
-
-class _VideoPlayerState extends State<StatefulWidget> {
-  final VideoPlayerId videoPlayerRef;
-  bool isPlaying = true;
-
-  _VideoPlayerState(this.videoPlayerRef);
-
-  @override
-  void initState() {
-    super.initState();
-    if (isPlaying) videoPlayerRef.play();
-  }
-
-  @override
-  void deactivate() {
-    if (isPlaying) videoPlayerRef.pause();
-    super.deactivate();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return new GestureDetector(
-      child: new ExternalImage(imageId: videoPlayerRef._imageId),
-      onTap: () {
-        isPlaying = !isPlaying;
-        setState(() {});
-        if (isPlaying) {
-          videoPlayerRef.play();
-        } else {
-          videoPlayerRef.pause();
-        }
-      },
-    );
+        'seekTo', {'imageId': imageId, 'location': duration.inMilliseconds});
   }
 }
