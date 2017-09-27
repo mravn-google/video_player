@@ -4,6 +4,8 @@
 @interface VideoPlayer: NSObject<FlutterPlatformSurface>
 @property(readonly, nonatomic) AVPlayer* player;
 @property(readonly, nonatomic) AVPlayerItemVideoOutput* videoOutput;
+- (void)play;
+- (void)pause;
 @end
 
 @implementation VideoPlayer
@@ -46,12 +48,20 @@
   return self;
 }
 
-- (BOOL)hasNewImage {
+- (void)play {
+  [_player play];
+}
+
+- (void)pause {
+  [_player pause];
+}
+
+- (BOOL)hasNewPixelBuffer {
   CMTime outputItemTime = [_videoOutput itemTimeForHostTime:CACurrentMediaTime()];
   return [_videoOutput hasNewPixelBufferForItemTime:outputItemTime];
 }
 
-- (CVPixelBufferRef)getImage {
+- (CVPixelBufferRef)getPixelBuffer {
   CMTime outputItemTime = [_videoOutput itemTimeForHostTime:CACurrentMediaTime()];
   if ([_videoOutput hasNewPixelBufferForItemTime:outputItemTime]) {
     return [_videoOutput copyPixelBufferForItemTime:outputItemTime itemTimeForDisplay:NULL];
@@ -84,17 +94,25 @@
 }
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
-  if ([@"createVideoPlayer" isEqualToString:call.method]) {
+  if ([@"create" isEqualToString:call.method]) {
     VideoPlayer* player = [[VideoPlayer alloc] init];
     NSUInteger imageId = [_registry registerPlatformSurface:player];
     _players[@(imageId)] = player;
     result(@(imageId));
-  } else if ([@"disposeVideoPlayer" isEqualToString:call.method]) {
-    NSUInteger imageId = ((NSNumber*) call.arguments).unsignedIntegerValue;
-    [_players removeObjectForKey:@(imageId)];
-    [_registry unregisterPlatformSurface:imageId];
   } else {
-    result(FlutterMethodNotImplemented);
+    NSDictionary* argsMap = call.arguments;
+    NSUInteger surfaceId = ((NSNumber*) argsMap[@"surfaceId"]).unsignedIntegerValue;
+    AVPlayer* player = _players[@(surfaceId)];
+    if ([@"dispose" isEqualToString:call.method]) {
+      [_players removeObjectForKey:@(surfaceId)];
+      [_registry unregisterPlatformSurface:surfaceId];
+    } else if ([@"play" isEqualToString:call.method]) {
+      [player play];
+    } else if ([@"pause" isEqualToString:call.method]) {
+      [player pause];
+    } else {
+      result(FlutterMethodNotImplemented);
+    }
   }
 }
 
