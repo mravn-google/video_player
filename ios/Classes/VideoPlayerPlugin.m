@@ -4,12 +4,15 @@
 @interface VideoPlayer: NSObject<FlutterPlatformSurface>
 @property(readonly, nonatomic) AVPlayer* player;
 @property(readonly, nonatomic) AVPlayerItemVideoOutput* videoOutput;
+@property(readonly, nonatomic) CADisplayLink* displayLink;
+@property(nonatomic, copy) void (^onNewFrameAvailable)();
+- (instancetype)initWithURL:(NSURL*)url;
 - (void)play;
 - (void)pause;
 @end
 
 @implementation VideoPlayer
-- (instancetype)init {
+- (instancetype)initWithURL:(NSURL*)url {
   self = [super init];
   NSAssert(self, @"super init cannot be nil");
   _player = [[AVPlayer alloc] init];
@@ -26,7 +29,7 @@
     (id)kCVPixelBufferIOSurfacePropertiesKey: @{}
   };
   _videoOutput = [[AVPlayerItemVideoOutput alloc] initWithPixelBufferAttributes:pixBuffAttributes];
-  AVPlayerItem *item = [AVPlayerItem playerItemWithURL:[NSURL URLWithString:@"http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_10mb.mp4"]];
+  AVPlayerItem *item = [AVPlayerItem playerItemWithURL:url];
   AVAsset *asset = [item asset];
   [asset loadValuesAsynchronouslyForKeys:@[@"tracks"] completionHandler:^{
       if ([asset statusOfValueForKey:@"tracks" error:nil] == AVKeyValueStatusLoaded) {
@@ -45,20 +48,26 @@
           }
       }
   }];
+  _displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(onDisplayLink:)];
+  [_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+  _displayLink.paused = YES;
   return self;
 }
 
 - (void)play {
   [_player play];
+  _displayLink.paused = NO;
 }
 
 - (void)pause {
   [_player pause];
+  _displayLink.paused = YES;
 }
 
-- (BOOL)hasNewPixelBuffer {
-  CMTime outputItemTime = [_videoOutput itemTimeForHostTime:CACurrentMediaTime()];
-  return [_videoOutput hasNewPixelBufferForItemTime:outputItemTime];
+- (void)onDisplayLink:(CADisplayLink*)link {
+  if (_onNewFrameAvailable) {
+    _onNewFrameAvailable();
+  }
 }
 
 - (CVPixelBufferRef)getPixelBuffer {
@@ -95,10 +104,15 @@
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
   if ([@"create" isEqualToString:call.method]) {
-    VideoPlayer* player = [[VideoPlayer alloc] init];
-    NSUInteger imageId = [_registry registerPlatformSurface:player];
-    _players[@(imageId)] = player;
-    result(@(imageId));
+    NSDictionary* argsMap = call.arguments;
+    NSString* dataSource = argsMap[@"dataSource"];
+    VideoPlayer* player = [[VideoPlayer alloc] initWithURL:[NSURL URLWithString:dataSource]];
+    NSUInteger surfaceId = [_registry registerPlatformSurface:player];
+    _players[@(surfaceId)] = player;
+    player.onNewFrameAvailable = ^{
+      [_registry newPlatformSurfaceFrameAvailable:surfaceId];
+    };
+    result(@(surfaceId));
   } else {
     NSDictionary* argsMap = call.arguments;
     NSUInteger surfaceId = ((NSNumber*) argsMap[@"surfaceId"]).unsignedIntegerValue;
