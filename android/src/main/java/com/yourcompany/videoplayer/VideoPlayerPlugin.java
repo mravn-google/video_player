@@ -24,8 +24,8 @@ public class VideoPlayerPlugin implements MethodCallHandler {
     @TargetApi(21)
     VideoPlayer(FlutterView view, String dataSource, final Result result) {
       this.view = view;
-      surfaceId = FlutterView.createSurfaceTexture();
-      SurfaceTexture surfaceTexture = FlutterView.getSurfaceTexture(surfaceId);
+      surfaceId = view.createSurfaceTexture();
+      SurfaceTexture surfaceTexture = view.getSurfaceTexture(surfaceId);
       surfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
         @Override
         public void onFrameAvailable(SurfaceTexture texture) {
