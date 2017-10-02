@@ -5,7 +5,7 @@
 @property(readonly, nonatomic) AVPlayer* player;
 @property(readonly, nonatomic) AVPlayerItemVideoOutput* videoOutput;
 @property(readonly, nonatomic) CADisplayLink* displayLink;
-@property(nonatomic, copy) void (^onNewFrameAvailable)();
+@property(nonatomic, copy) void (^onFrameAvailable)();
 - (instancetype)initWithURL:(NSURL*)url;
 - (void)play;
 - (void)pause;
@@ -65,8 +65,8 @@
 }
 
 - (void)onDisplayLink:(CADisplayLink*)link {
-  if (_onNewFrameAvailable) {
-    _onNewFrameAvailable();
+  if (_onFrameAvailable) {
+    _onFrameAvailable();
   }
 }
 
@@ -109,8 +109,8 @@
     VideoPlayer* player = [[VideoPlayer alloc] initWithURL:[NSURL URLWithString:dataSource]];
     NSUInteger surfaceId = [_registry registerPlatformSurface:player];
     _players[@(surfaceId)] = player;
-    player.onNewFrameAvailable = ^{
-      [_registry newPlatformSurfaceFrameAvailable:surfaceId];
+    player.onFrameAvailable = ^{
+      [_registry platformSurfaceFrameAvailable:surfaceId];
     };
     result(@(surfaceId));
   } else {
