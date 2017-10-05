@@ -29,16 +29,7 @@ public class VideoPlayerPlugin implements MethodCallHandler {
       this.textureHandle = textureHandle;
       this.mediaPlayer = new MediaPlayer();
       try {
-        textureHandle.setSurfaceTextureConsumer(new FlutterView.SurfaceTextureConsumer() {
-          @Override
-          public void accept(SurfaceTexture texture) {
-            if (texture == null) {
-              mediaPlayer.setSurface(null);
-            } else {
-              mediaPlayer.setSurface(new Surface(texture));
-            }
-          }
-        });
+        mediaPlayer.setSurface(new Surface(textureHandle.getSurfaceTexture()));
         mediaPlayer.setDataSource(dataSource);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
           mediaPlayer.setAudioAttributes(new AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_MOVIE).build());
