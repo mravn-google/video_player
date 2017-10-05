@@ -21,22 +21,25 @@ import java.util.Map;
 
 public class VideoPlayerPlugin implements MethodCallHandler {
   private class VideoPlayer {
-    @TargetApi(21)
-    VideoPlayer(FlutterView view, String dataSource, final Result result) {
-      this.view = view;
-      surfaceId = view.createSurfaceTexture();
-      SurfaceTexture surfaceTexture = view.getSurfaceTexture(surfaceId);
-      surfaceTexture.setOnFrameAvailableListener(new SurfaceTexture.OnFrameAvailableListener() {
-        @Override
-        public void onFrameAvailable(SurfaceTexture texture) {
-          VideoPlayer.this.view.markSurfaceTextureDirty(surfaceId);
-        }
-      });
-      mediaPlayer = new MediaPlayer();
-      try {
-        mediaPlayer.setDataSource(dataSource);
+    private final FlutterView.SurfaceTextureHandle textureHandle;
+    private final MediaPlayer mediaPlayer;
 
-        mediaPlayer.setSurface(new Surface(surfaceTexture));
+    @TargetApi(21)
+    VideoPlayer(final FlutterView.SurfaceTextureHandle textureHandle, String dataSource, final Result result) {
+      this.textureHandle = textureHandle;
+      this.mediaPlayer = new MediaPlayer();
+      try {
+        textureHandle.setSurfaceTextureConsumer(new FlutterView.SurfaceTextureConsumer() {
+          @Override
+          public void accept(SurfaceTexture texture) {
+            if (texture == null) {
+              mediaPlayer.setSurface(null);
+            } else {
+              mediaPlayer.setSurface(new Surface(texture));
+            }
+          }
+        });
+        mediaPlayer.setDataSource(dataSource);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
           mediaPlayer.setAudioAttributes(new AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_MOVIE).build());
         } else {
@@ -46,7 +49,7 @@ public class VideoPlayerPlugin implements MethodCallHandler {
           @Override
           public void onPrepared(MediaPlayer mp) {
             mediaPlayer.setLooping(true);
-            result.success(surfaceId);
+            result.success(textureHandle.getSurfaceId());
           }
         });
         mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
@@ -78,17 +81,15 @@ public class VideoPlayerPlugin implements MethodCallHandler {
     }
 
     public long getSurfaceId() {
-      return surfaceId;
+      return textureHandle.getSurfaceId();
     }
 
     public void dispose() {
       mediaPlayer.release();
+      textureHandle.release();
     }
-
-    private final FlutterView view;
-    private final MediaPlayer mediaPlayer;
-    private final long surfaceId;
   }
+
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), "video_player");
     channel.setMethodCallHandler(new VideoPlayerPlugin(registrar.view()));
@@ -105,7 +106,7 @@ public class VideoPlayerPlugin implements MethodCallHandler {
   @Override
   public void onMethodCall(MethodCall call, Result result) {
     if (call.method.equals("create")) {
-      VideoPlayer videoPlayer = new VideoPlayer(view, (String)call.argument("dataSource"), result);
+      VideoPlayer videoPlayer = new VideoPlayer(view.createSurfaceTexture(), (String)call.argument("dataSource"), result);
       videoPlayers.put(videoPlayer.getSurfaceId(), videoPlayer);
     } else if (call.method.equals("play")) {
       long surfaceId = ((Number)call.argument("surfaceId")).longValue();
