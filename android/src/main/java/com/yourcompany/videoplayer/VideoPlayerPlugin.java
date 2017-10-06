@@ -76,6 +76,10 @@ public class VideoPlayerPlugin implements MethodCallHandler {
     }
 
     public void dispose() {
+      if (mediaPlayer.isPlaying()) {
+        mediaPlayer.stop();
+      }
+      mediaPlayer.reset();
       mediaPlayer.release();
       textureHandle.release();
     }

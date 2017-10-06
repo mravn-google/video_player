@@ -9,12 +9,12 @@ class RotatingWidget extends StatefulWidget {
 
   final Widget video;
 
-  createState() => new AnimatedVideoState(video);
+  createState() => new _RotatingWidgetState(video);
 }
 
-class AnimatedVideoState extends State<RotatingWidget>
+class _RotatingWidgetState extends State<RotatingWidget>
     with TickerProviderStateMixin {
-  AnimatedVideoState(this.video);
+  _RotatingWidgetState(this.video);
 
   @override
   void initState() {
@@ -125,12 +125,55 @@ class _VideoPlayerState extends State<StatefulWidget> {
   }
 }
 
-void main() {
-  Future<VideoPlayerId> video = VideoPlayerId.create(
-      'http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_20mb.mp4');
-  runApp(new MaterialApp(
-      home: new Scaffold(
-    body: new ListView(
+typedef Widget VideoWidgetBuilder(
+    BuildContext context, Future<VideoPlayerId> videoPlayerId);
+
+class PlayerLifeCycle extends StatefulWidget {
+  final VideoWidgetBuilder videoWidgetBuilder;
+
+  PlayerLifeCycle(this.videoWidgetBuilder);
+
+  @override
+  _PlayerLifeCycleState createState() =>
+      new _PlayerLifeCycleState(videoWidgetBuilder);
+}
+
+class _PlayerLifeCycleState extends State<PlayerLifeCycle> {
+  Future<VideoPlayerId> video;
+  final VideoWidgetBuilder videoWidgetBuilder;
+
+  _PlayerLifeCycleState(this.videoWidgetBuilder);
+
+  @override
+  void initState() {
+    super.initState();
+    video = VideoPlayerId.create(
+        'http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_20mb.mp4');
+  }
+
+  @override
+  void dispose() {
+    video.then((VideoPlayerId videoId) {
+      videoId.dispose();
+    });
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return videoWidgetBuilder(context, video);
+  }
+}
+
+class Rotating extends StatelessWidget {
+  final Future<VideoPlayerId> video;
+
+  Rotating(this.video);
+
+  @override
+  Widget build(BuildContext context) {
+    return new ListView(
       children: [
         buildCard("Airline a"),
         buildCard("Airline b"),
@@ -198,17 +241,56 @@ void main() {
         buildCard("Airline j"),
         buildCard("Airline k"),
         buildCard("Airline l"),
-        buildCard("Airline m"),
-        buildCard("Airline n"),
-        buildCard("Airline o"),
-        buildCard("Airline p"),
-        buildCard("Airline q"),
-        buildCard("Airline r"),
-        buildCard("Airline t"),
-        buildCard("Airline u"),
-        buildCard("Airline v"),
-        buildCard("Airline w"),
       ],
+    );
+  }
+}
+
+void main() {
+  runApp(
+    new MaterialApp(
+      home: new DefaultTabController(
+        length: 2,
+        child: new Scaffold(
+          appBar: new AppBar(
+            title: const Text('Tabbed AppBar'),
+            bottom: new TabBar(
+              isScrollable: true,
+              tabs: [
+                new Tab(icon: new Icon(Icons.arrow_upward)),
+                new Tab(icon: new Icon(Icons.rotate_right)),
+              ],
+            ),
+          ),
+          body: new TabBarView(
+            children: [
+              new PlayerLifeCycle(
+                (BuildContext context, Future<VideoPlayerId> video) =>
+                    new FutureBuilder(
+                      future: video,
+                      builder: (BuildContext context,
+                          AsyncSnapshot<VideoPlayerId> snapshot) {
+                        switch (snapshot.connectionState) {
+                          case ConnectionState.none:
+                            return new Text('No video loaded');
+                          case ConnectionState.waiting:
+                            return new Text('Awaiting video...');
+                          default:
+                            if (snapshot.hasError)
+                              return new Text('Error: ${snapshot.error}');
+                            else
+                              return new VideoPlayer(snapshot.data);
+                        }
+                      },
+                    ),
+              ),
+              new PlayerLifeCycle(
+                  (BuildContext context, Future<VideoPlayerId> video) =>
+                      new Rotating(video)),
+            ],
+          ),
+        ),
+      ),
     ),
-  )));
+  );
 }
