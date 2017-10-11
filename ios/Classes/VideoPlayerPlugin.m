@@ -1,7 +1,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import "VideoPlayerPlugin.h"
 
-@interface VideoPlayer: NSObject<FlutterPlatformSurface>
+@interface VideoPlayer: NSObject<FlutterTexture>
 @property(readonly, nonatomic) AVPlayer* player;
 @property(readonly, nonatomic) AVPlayerItemVideoOutput* videoOutput;
 @property(readonly, nonatomic) CADisplayLink* displayLink;
@@ -81,7 +81,7 @@
 @end
 
 @interface VideoPlayerPlugin()
-@property(readonly, nonatomic) NSObject<FlutterPlatformSurfaceRegistry>* registry;
+@property(readonly, nonatomic) NSObject<FlutterTextureRegistry>* registry;
 @property(readonly, nonatomic) NSMutableDictionary* players;
 @end
 
@@ -90,11 +90,11 @@
   FlutterMethodChannel* channel = [FlutterMethodChannel
       methodChannelWithName:@"video_player"
             binaryMessenger:[registrar messenger]];
-  VideoPlayerPlugin* instance = [[VideoPlayerPlugin alloc] initWithRegistry:[registrar platformSurfaceRegistry]];
+  VideoPlayerPlugin* instance = [[VideoPlayerPlugin alloc] initWithRegistry:[registrar textureRegistry]];
   [registrar addMethodCallDelegate:instance channel:channel];
 }
 
-- (instancetype)initWithRegistry:(NSObject<FlutterPlatformSurfaceRegistry>*)registry {
+- (instancetype)initWithRegistry:(NSObject<FlutterTextureRegistry>*)registry {
   self = [super init];
   NSAssert(self, @"super init cannot be nil");
   _registry = registry;
@@ -107,19 +107,19 @@
     NSDictionary* argsMap = call.arguments;
     NSString* dataSource = argsMap[@"dataSource"];
     VideoPlayer* player = [[VideoPlayer alloc] initWithURL:[NSURL URLWithString:dataSource]];
-    NSUInteger surfaceId = [_registry registerPlatformSurface:player];
-    _players[@(surfaceId)] = player;
+    NSUInteger textureId = [_registry registerTexture:player];
+    _players[@(textureId)] = player;
     player.onFrameAvailable = ^{
-      [_registry platformSurfaceFrameAvailable:surfaceId];
+      [_registry textureFrameAvailable:textureId];
     };
-    result(@(surfaceId));
+    result(@(textureId));
   } else {
     NSDictionary* argsMap = call.arguments;
-    NSUInteger surfaceId = ((NSNumber*) argsMap[@"surfaceId"]).unsignedIntegerValue;
-    AVPlayer* player = _players[@(surfaceId)];
+    NSUInteger textureId = ((NSNumber*) argsMap[@"textureId"]).unsignedIntegerValue;
+    AVPlayer* player = _players[@(textureId)];
     if ([@"dispose" isEqualToString:call.method]) {
-      [_players removeObjectForKey:@(surfaceId)];
-      [_registry unregisterPlatformSurface:surfaceId];
+      [_players removeObjectForKey:@(textureId)];
+      [_registry unregisterTexture:textureId];
     } else if ([@"play" isEqualToString:call.method]) {
       [player play];
     } else if ([@"pause" isEqualToString:call.method]) {

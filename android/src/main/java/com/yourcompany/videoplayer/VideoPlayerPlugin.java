@@ -40,7 +40,7 @@ public class VideoPlayerPlugin implements MethodCallHandler {
           @Override
           public void onPrepared(MediaPlayer mp) {
             mediaPlayer.setLooping(true);
-            result.success(textureHandle.getSurfaceId());
+            result.success(textureHandle.getId());
           }
         });
         mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
@@ -71,8 +71,8 @@ public class VideoPlayerPlugin implements MethodCallHandler {
       return mediaPlayer.getDuration();
     }
 
-    public long getSurfaceId() {
-      return textureHandle.getSurfaceId();
+    public long getTextureId() {
+      return textureHandle.getId();
     }
 
     public void dispose() {
@@ -102,30 +102,30 @@ public class VideoPlayerPlugin implements MethodCallHandler {
   public void onMethodCall(MethodCall call, Result result) {
     if (call.method.equals("create")) {
       VideoPlayer videoPlayer = new VideoPlayer(view.createSurfaceTexture(), (String)call.argument("dataSource"), result);
-      videoPlayers.put(videoPlayer.getSurfaceId(), videoPlayer);
+      videoPlayers.put(videoPlayer.getTextureId(), videoPlayer);
     } else if (call.method.equals("play")) {
-      long surfaceId = ((Number)call.argument("surfaceId")).longValue();
-      VideoPlayer player = videoPlayers.get(surfaceId);
+      long textureId = ((Number)call.argument("textureId")).longValue();
+      VideoPlayer player = videoPlayers.get(textureId);
       player.play();
       result.success(true);
     } else if (call.method.equals("pause")) {
-      long surfaceId = ((Number)call.argument("surfaceId")).longValue();
-      VideoPlayer player = videoPlayers.get(surfaceId);
+      long textureId = ((Number)call.argument("textureId")).longValue();
+      VideoPlayer player = videoPlayers.get(textureId);
       player.pause();
       result.success(true);
     } else if (call.method.equals("seekTo")) {
-      long surfaceId = ((Number)call.argument("surfaceId")).longValue();
+      long textureId = ((Number)call.argument("textureId")).longValue();
       int location = ((Number)call.argument("location")).intValue();
-      VideoPlayer player = videoPlayers.get(surfaceId);
+      VideoPlayer player = videoPlayers.get(textureId);
       player.seekTo(location);
       result.success(true);
     } else if (call.method.equals("duration")) {
-      long surfaceId = ((Number)call.argument("surfaceId")).longValue();
-      VideoPlayer player = videoPlayers.get(surfaceId);
+      long textureId = ((Number)call.argument("textureId")).longValue();
+      VideoPlayer player = videoPlayers.get(textureId);
       result.success(player.getDuration());
     } else if (call.method.equals("dispose")) {
-      long surfaceId = ((Number)call.argument("surfaceId")).longValue();
-      VideoPlayer player = videoPlayers.remove(surfaceId);
+      long textureId = ((Number)call.argument("textureId")).longValue();
+      VideoPlayer player = videoPlayers.remove(textureId);
       if (player != null) {
         player.dispose();
       }

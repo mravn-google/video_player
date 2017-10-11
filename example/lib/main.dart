@@ -1,5 +1,5 @@
-import 'dart:math' show sin;
 import 'dart:async';
+import 'dart:math' show sin;
 
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -111,7 +111,7 @@ class _VideoPlayerState extends State<StatefulWidget> {
   @override
   Widget build(BuildContext context) {
     return new GestureDetector(
-      child: new PlatformSurface(surfaceId: videoPlayerId.surfaceId),
+      child: new Texture(textureId: videoPlayerId.textureId),
       onTap: () {
         isPlaying = !isPlaying;
         setState(() {});
