@@ -2,6 +2,7 @@
 #import "VideoPlayerPlugin.h"
 
 @interface VideoPlayer: NSObject<FlutterTexture>
+@property(readonly, nonatomic) uint64_t textureId;
 @property(readonly, nonatomic) AVPlayer* player;
 @property(readonly, nonatomic) AVPlayerItemVideoOutput* videoOutput;
 @property(readonly, nonatomic) CADisplayLink* displayLink;
@@ -90,7 +91,7 @@
   FlutterMethodChannel* channel = [FlutterMethodChannel
       methodChannelWithName:@"video_player"
             binaryMessenger:[registrar messenger]];
-  VideoPlayerPlugin* instance = [[VideoPlayerPlugin alloc] initWithRegistry:[registrar textureRegistry]];
+  VideoPlayerPlugin* instance = [[VideoPlayerPlugin alloc] initWithRegistry:[registrar textures]];
   [registrar addMethodCallDelegate:instance channel:channel];
 }
 
@@ -107,7 +108,7 @@
     NSDictionary* argsMap = call.arguments;
     NSString* dataSource = argsMap[@"dataSource"];
     VideoPlayer* player = [[VideoPlayer alloc] initWithURL:[NSURL URLWithString:dataSource]];
-    NSUInteger textureId = [_registry registerTexture:player];
+    uint64_t textureId = [_registry registerTexture:player];
     _players[@(textureId)] = player;
     player.onFrameAvailable = ^{
       [_registry textureFrameAvailable:textureId];

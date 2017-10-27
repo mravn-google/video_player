@@ -148,7 +148,7 @@ class _PlayerLifeCycleState extends State<PlayerLifeCycle> {
   void initState() {
     super.initState();
     video = VideoPlayerId.create(
-        'http://www.sample-videos.com/video/mp4/720/big_buck_bunny_720p_20mb.mp4');
+        'http://mirrors.standaloneinstaller.com/video-sample/Panasonic_HDC_TM_700_P_50i.mp4');
   }
 
   @override
@@ -156,7 +156,6 @@ class _PlayerLifeCycleState extends State<PlayerLifeCycle> {
     video.then((VideoPlayerId videoId) {
       videoId.dispose();
     });
-
     super.dispose();
   }
 

@@ -14,6 +14,7 @@ import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.view.FlutterView;
+import io.flutter.view.TextureRegistry;
 import android.util.Log;
 
 import java.util.HashMap;
@@ -21,15 +22,15 @@ import java.util.Map;
 
 public class VideoPlayerPlugin implements MethodCallHandler {
   private class VideoPlayer {
-    private final FlutterView.SurfaceTextureHandle textureHandle;
+    private final TextureRegistry.SurfaceTextureEntry textureEntry;
     private final MediaPlayer mediaPlayer;
 
     @TargetApi(21)
-    VideoPlayer(final FlutterView.SurfaceTextureHandle textureHandle, String dataSource, final Result result) {
-      this.textureHandle = textureHandle;
+    VideoPlayer(final TextureRegistry.SurfaceTextureEntry textureEntry, String dataSource, final Result result) {
+      this.textureEntry = textureEntry;
       this.mediaPlayer = new MediaPlayer();
       try {
-        mediaPlayer.setSurface(new Surface(textureHandle.getSurfaceTexture()));
+        mediaPlayer.setSurface(new Surface(textureEntry.surfaceTexture()));
         mediaPlayer.setDataSource(dataSource);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
           mediaPlayer.setAudioAttributes(new AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_MOVIE).build());
@@ -40,7 +41,7 @@ public class VideoPlayerPlugin implements MethodCallHandler {
           @Override
           public void onPrepared(MediaPlayer mp) {
             mediaPlayer.setLooping(true);
-            result.success(textureHandle.getId());
+            result.success(textureEntry.id());
           }
         });
         mediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
@@ -72,7 +73,7 @@ public class VideoPlayerPlugin implements MethodCallHandler {
     }
 
     public long getTextureId() {
-      return textureHandle.getId();
+      return textureEntry.id();
     }
 
     public void dispose() {
@@ -81,7 +82,7 @@ public class VideoPlayerPlugin implements MethodCallHandler {
       }
       mediaPlayer.reset();
       mediaPlayer.release();
-      textureHandle.release();
+      textureEntry.release();
     }
   }
 
@@ -101,8 +102,8 @@ public class VideoPlayerPlugin implements MethodCallHandler {
   @Override
   public void onMethodCall(MethodCall call, Result result) {
     if (call.method.equals("create")) {
-      VideoPlayer videoPlayer = new VideoPlayer(view.createSurfaceTexture(), (String)call.argument("dataSource"), result);
-      videoPlayers.put(videoPlayer.getTextureId(), videoPlayer);
+      TextureRegistry.SurfaceTextureEntry handle = view.createSurfaceTexture();
+      videoPlayers.put(handle.id(), new VideoPlayer(handle, (String)call.argument("dataSource"), result));
     } else if (call.method.equals("play")) {
       long textureId = ((Number)call.argument("textureId")).longValue();
       VideoPlayer player = videoPlayers.get(textureId);
